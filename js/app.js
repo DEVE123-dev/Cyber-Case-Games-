@@ -115,12 +115,28 @@ function fmtTime(seconds) {
   return m + ":" + s;
 }
 
+function teamDetailsComplete() {
+  return state.team.name.trim() !== "" && state.team.members.trim() !== "";
+}
+
+function updateTaskButtonsState() {
+  const ready = teamDetailsComplete();
+  Array.prototype.forEach.call(document.querySelectorAll(".task-btn"), (btn) => {
+    if (!btn.dataset.key || !TASK_ORDER.includes(btn.dataset.key)) return;
+    btn.disabled = !ready;
+    const taskKey = btn.dataset.key;
+    const t = state.tasks[taskKey];
+    btn.textContent = ready ? (t.completed ? "Review" : t.started ? "Continue" : "Start") : "Enter team details first";
+  });
+}
+
 function renderDashboard() {
   const el = document.getElementById("view-dashboard");
   const totalScore = TASK_ORDER.reduce((sum, k) => sum + (state.tasks[k].score || 0), 0);
   const totalMax = TASK_ORDER.reduce((sum, k) => sum + state.tasks[k].total, 0);
   const totalTime = TASK_ORDER.reduce((sum, k) => sum + (state.tasks[k].timeSeconds || 0), 0);
   const allDone = TASK_ORDER.every((k) => state.tasks[k].completed);
+  const ready = teamDetailsComplete();
 
   const cards = TASK_ORDER.map((key) => {
     const task = TASKS[key];
@@ -134,7 +150,7 @@ function renderDashboard() {
         <h3>${esc(task.title)}</h3>
         <span class="status-badge ${status.cls}">${status.label}</span>
         ${scoreLine}
-        <button class="task-btn" data-key="${key}">${btnLabel}</button>
+        <button class="task-btn" data-key="${key}" ${ready ? "" : "disabled"}>${ready ? btnLabel : "Enter team details first"}</button>
       </div>`;
   }).join("");
 
@@ -146,6 +162,7 @@ function renderDashboard() {
     <div class="card">
       <h2>Team Setup</h2>
       <p>Enter your team details once here. They carry over automatically into every task.</p>
+      <p style="margin-top: 10px;">Enter a team name and participant names before starting any station.</p>
       <div class="team-row" style="margin-top: 14px;">
         <input class="team-input" id="teamNameInput" placeholder="Team name" value="${esc(state.team.name)}" />
         <input class="team-input" id="teamMembersInput" placeholder="Participant names" value="${esc(state.team.members)}" />
@@ -172,10 +189,12 @@ function renderDashboard() {
     state.team.name = e.target.value;
     saveState();
     renderNav();
+    updateTaskButtonsState();
   });
   document.getElementById("teamMembersInput").addEventListener("input", (e) => {
     state.team.members = e.target.value;
     saveState();
+    updateTaskButtonsState();
   });
   document.getElementById("resetBtn").addEventListener("click", () => {
     if (confirm("This clears all scores, timers, and team info on this device. Continue?")) {
@@ -240,6 +259,12 @@ function renderTask(key) {
   const t = state.tasks[key];
   const el = document.getElementById("view-" + key);
 
+  if (!teamDetailsComplete()) {
+    alert("Please enter your team name and participant names before starting any station.");
+    navigate("dashboard");
+    return;
+  }
+
   if (!t.started && !t.completed) {
     t.started = true;
     t.startTime = Date.now();
@@ -257,6 +282,7 @@ function renderTask(key) {
       <span class="chip">TASK ${task.number} OF 3</span>
       <span class="timer" id="timer-${key}">00:00</span>
     </div>
+    <div class="team-pill" style="margin: 8px 0 12px;">TEAM: ${esc(state.team.name || "(no team name)")}</div>
     <h1>${esc(task.title)}</h1>
     <div class="subtitle">${esc(task.subtitle)}</div>
 
