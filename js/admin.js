@@ -187,35 +187,51 @@ function setConnectionWarning(show) {
   el.hidden = !show;
 }
 
-/* A single missed refresh (a brief wifi drop, or Apps Script being slow to
-   respond) should not blank out a leaderboard that was working a moment
-   ago, that just flickers the screen for no reason. Only fall back to the
-   full "not connected" message on the very first load, or once several
-   refreshes in a row have failed, meaning it is a real outage rather than
-   a blip. In between, keep showing the last good data with a small warning
-   next to "Last updated" instead of replacing the whole screen. */
+function fetchLeaderboardOnce() {
+  return fetch(APPS_SCRIPT_URL, { cache: "no-store" }).then((res) => res.json());
+}
+
+function handleFetchSuccess(rows) {
+  hasLoadedOnce = true;
+  consecutiveFailures = 0;
+  renderLeaderboard(rows);
+  setLastUpdated();
+  setConnectionWarning(false);
+}
+
+function handleFetchFailure() {
+  consecutiveFailures++;
+  if (!hasLoadedOnce || consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+    setConnectionWarning(false);
+    renderNotConnected("Could not reach the leaderboard right now. Check the connection here, or check that the Apps Script web app is deployed with access set to Anyone.");
+  } else {
+    setConnectionWarning(true);
+  }
+}
+
+/* A single missed refresh (a brief wifi drop, a moment of contention on the
+   sheet from a team submitting at the same time, or Apps Script being slow
+   to respond) should not blank out a leaderboard that was working a moment
+   ago. Two layers of tolerance here:
+   1. A quick, once-only retry a couple seconds after the first failure,
+      before the next scheduled 10 second poll would even fire. Most blips
+      are this short, so this alone absorbs the majority of them with
+      nothing visible on screen at all.
+   2. If that retry also fails, fall back to the same "keep showing the
+      last good data with a small warning" behavior, only replacing the
+      whole screen with "not connected" on the first load ever, or after
+      several full poll cycles have failed in a row (a real outage). */
 function fetchLeaderboard() {
   if (!APPS_SCRIPT_URL) {
     renderNotConnected("The leaderboard is not connected yet. Deploy Code.gs as a web app, then paste the web app URL into js/config.js as APPS_SCRIPT_URL.");
     return;
   }
-  fetch(APPS_SCRIPT_URL, { cache: "no-store" })
-    .then((res) => res.json())
-    .then((rows) => {
-      hasLoadedOnce = true;
-      consecutiveFailures = 0;
-      renderLeaderboard(rows);
-      setLastUpdated();
-      setConnectionWarning(false);
-    })
+  fetchLeaderboardOnce()
+    .then(handleFetchSuccess)
     .catch(() => {
-      consecutiveFailures++;
-      if (!hasLoadedOnce || consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-        setConnectionWarning(false);
-        renderNotConnected("Could not reach the leaderboard right now. Check the connection here, or check that the Apps Script web app is deployed with access set to Anyone.");
-      } else {
-        setConnectionWarning(true);
-      }
+      setTimeout(() => {
+        fetchLeaderboardOnce().then(handleFetchSuccess).catch(handleFetchFailure);
+      }, 2000);
     });
 }
 
