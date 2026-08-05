@@ -18,7 +18,10 @@
       <div class="subtitle">Read only view for judges</div>
       <div class="admin-status-row">
         <span class="admin-updated" id="loggedInAs"></span>
-        <span class="admin-updated" id="lastUpdated"></span>
+        <span class="admin-updated">
+          <span id="lastUpdated"></span>
+          <span class="connection-warning" id="connectionWarning" hidden>Having trouble reaching the leaderboard, retrying...</span>
+        </span>
       </div>
       <div id="leaderboardRegion"></div>
 

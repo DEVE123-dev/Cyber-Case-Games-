@@ -500,6 +500,11 @@ footer.app-footer {
   color: var(--white);
   opacity: 0.6;
 }
+.connection-warning {
+  margin-left: 8px;
+  color: #FFF3CD;
+  opacity: 1;
+}
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;

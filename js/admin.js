@@ -3,8 +3,11 @@
    it has no game state of its own, only config.js and admin-config.js. */
 
 const REFRESH_MS = 10000;
+const MAX_CONSECUTIVE_FAILURES = 3;
 let refreshTimer = null;
 let loggedInUser = "";
+let hasLoadedOnce = false;
+let consecutiveFailures = 0;
 
 function esc(s) {
   return String(s)
@@ -178,6 +181,19 @@ function setLastUpdated() {
   el.textContent = "Last updated: " + new Date().toLocaleTimeString();
 }
 
+function setConnectionWarning(show) {
+  const el = document.getElementById("connectionWarning");
+  if (!el) return;
+  el.hidden = !show;
+}
+
+/* A single missed refresh (a brief wifi drop, or Apps Script being slow to
+   respond) should not blank out a leaderboard that was working a moment
+   ago, that just flickers the screen for no reason. Only fall back to the
+   full "not connected" message on the very first load, or once several
+   refreshes in a row have failed, meaning it is a real outage rather than
+   a blip. In between, keep showing the last good data with a small warning
+   next to "Last updated" instead of replacing the whole screen. */
 function fetchLeaderboard() {
   if (!APPS_SCRIPT_URL) {
     renderNotConnected("The leaderboard is not connected yet. Deploy Code.gs as a web app, then paste the web app URL into js/config.js as APPS_SCRIPT_URL.");
@@ -186,11 +202,20 @@ function fetchLeaderboard() {
   fetch(APPS_SCRIPT_URL, { cache: "no-store" })
     .then((res) => res.json())
     .then((rows) => {
+      hasLoadedOnce = true;
+      consecutiveFailures = 0;
       renderLeaderboard(rows);
       setLastUpdated();
+      setConnectionWarning(false);
     })
     .catch(() => {
-      renderNotConnected("Could not reach the leaderboard right now. Check the connection here, or check that the Apps Script web app is deployed with access set to Anyone.");
+      consecutiveFailures++;
+      if (!hasLoadedOnce || consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        setConnectionWarning(false);
+        renderNotConnected("Could not reach the leaderboard right now. Check the connection here, or check that the Apps Script web app is deployed with access set to Anyone.");
+      } else {
+        setConnectionWarning(true);
+      }
     });
 }
 
