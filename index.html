@@ -16,6 +16,20 @@
     <section class="view" id="view-phishing"></section>
   </div>
 
+  <div class="welcome-modal-backdrop" id="welcomeModalBackdrop" hidden>
+    <div class="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcomeModalTitle">
+      <div class="welcome-modal-header">
+        <span class="chip">WELCOME</span>
+      </div>
+      <h2 id="welcomeModalTitle">Enter your team name</h2>
+      <p>Start by entering your team name for this session. You can continue to all three tasks once you click “Start”.</p>
+      <input class="team-input modal-input" id="welcomeTeamNameInput" placeholder="Team name" maxlength="60" />
+      <div class="modal-actions">
+        <button class="task-btn modal-start-btn" id="welcomeStartBtn">Start</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="app-footer">Cyber Case, a cybersecurity awareness challenge</footer>
 
   <script src="js/data.js"></script>

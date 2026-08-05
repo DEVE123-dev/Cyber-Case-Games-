@@ -54,6 +54,45 @@ let state = loadState();
 let activeKey = "dashboard";
 let timerInterval = null;
 
+function openWelcomeModal() {
+  const modal = document.getElementById("welcomeModalBackdrop");
+  const input = document.getElementById("welcomeTeamNameInput");
+  const startBtn = document.getElementById("welcomeStartBtn");
+  if (!modal || !input || !startBtn) return;
+  modal.hidden = false;
+  input.value = state.team.name || "";
+  startBtn.disabled = input.value.trim() === "";
+  input.focus();
+}
+
+function closeWelcomeModal() {
+  const modal = document.getElementById("welcomeModalBackdrop");
+  if (modal) modal.hidden = true;
+}
+
+function beginSessionWithTeamName() {
+  const input = document.getElementById("welcomeTeamNameInput");
+  const teamName = input ? input.value.trim() : "";
+  if (!teamName) {
+    alert("Please enter a team name before starting.");
+    return;
+  }
+  state.team.name = teamName;
+  saveState();
+  render();
+  closeWelcomeModal();
+}
+
+function showWelcomeModalIfNeeded() {
+  const modal = document.getElementById("welcomeModalBackdrop");
+  if (!modal) return;
+  if (state.team.name.trim()) {
+    modal.hidden = true;
+    return;
+  }
+  openWelcomeModal();
+}
+
 /* ---------- Routing ---------- */
 
 function currentRoute() {
@@ -87,11 +126,18 @@ function renderNav() {
   nav.innerHTML = `
     <div class="brand"><span class="dot">&gt;</span> Cyber Case</div>
     <div class="navlinks">${linksHTML}</div>
-    ${teamName ? `<div class="team-pill">TEAM: ${teamName}</div>` : ""}
+    <div class="team-pill-wrap">
+      <div class="team-pill"><span class="team-pill-label">Team:</span> ${teamName || "Not set"}</div>
+      <button class="team-pill-btn" id="changeTeamBtn">${teamName ? "Change" : "Set"} team</button>
+    </div>
   `;
   Array.prototype.forEach.call(nav.querySelectorAll(".navlink"), (el) => {
     el.addEventListener("click", () => navigate(el.dataset.key));
   });
+  const changeTeamBtn = document.getElementById("changeTeamBtn");
+  if (changeTeamBtn) {
+    changeTeamBtn.addEventListener("click", () => openWelcomeModal());
+  }
 }
 
 /* ---------- Dashboard ---------- */
@@ -437,7 +483,24 @@ function render() {
   } else {
     renderTask(activeKey);
   }
+  showWelcomeModalIfNeeded();
   window.scrollTo(0, 0);
 }
 
-document.addEventListener("DOMContentLoaded", render);
+document.addEventListener("DOMContentLoaded", () => {
+  const teamNameInput = document.getElementById("welcomeTeamNameInput");
+  const startBtn = document.getElementById("welcomeStartBtn");
+
+  if (teamNameInput) {
+    teamNameInput.addEventListener("input", (e) => {
+      const name = e.target.value.trim();
+      if (startBtn) startBtn.disabled = name === "";
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener("click", beginSessionWithTeamName);
+  }
+
+  render();
+});
