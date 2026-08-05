@@ -67,7 +67,10 @@ function openWelcomeModal() {
 
 function closeWelcomeModal() {
   const modal = document.getElementById("welcomeModalBackdrop");
-  if (modal) modal.hidden = true;
+  if (modal) {
+    modal.hidden = true;
+    modal.style.display = "none";
+  }
 }
 
 function beginSessionWithTeamName() {
@@ -79,8 +82,8 @@ function beginSessionWithTeamName() {
   }
   state.team.name = teamName;
   saveState();
-  render();
   closeWelcomeModal();
+  render();
 }
 
 function showWelcomeModalIfNeeded() {
@@ -162,7 +165,7 @@ function fmtTime(seconds) {
 }
 
 function teamDetailsComplete() {
-  return state.team.name.trim() !== "" && state.team.members.trim() !== "";
+  return state.team.name.trim() !== "";
 }
 
 function updateTaskButtonsState() {
@@ -172,7 +175,7 @@ function updateTaskButtonsState() {
     btn.disabled = !ready;
     const taskKey = btn.dataset.key;
     const t = state.tasks[taskKey];
-    btn.textContent = ready ? (t.completed ? "Review" : t.started ? "Continue" : "Start") : "Enter team details first";
+    btn.textContent = ready ? (t.completed ? "Review" : t.started ? "Continue" : "Start") : "Enter team name first";
   });
 }
 
@@ -196,7 +199,7 @@ function renderDashboard() {
         <h3>${esc(task.title)}</h3>
         <span class="status-badge ${status.cls}">${status.label}</span>
         ${scoreLine}
-        <button class="task-btn" data-key="${key}" ${ready ? "" : "disabled"}>${ready ? btnLabel : "Enter team details first"}</button>
+        <button class="task-btn" data-key="${key}" ${ready ? "" : "disabled"}>${ready ? btnLabel : "Enter team name first"}</button>
       </div>`;
   }).join("");
 
@@ -495,6 +498,12 @@ document.addEventListener("DOMContentLoaded", () => {
     teamNameInput.addEventListener("input", (e) => {
       const name = e.target.value.trim();
       if (startBtn) startBtn.disabled = name === "";
+    });
+
+    teamNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && teamNameInput.value.trim()) {
+        beginSessionWithTeamName();
+      }
     });
   }
 
