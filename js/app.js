@@ -24,7 +24,7 @@ function defaultState() {
       answers: {},
     };
   });
-  return { team: { name: "", members: "" }, tasks };
+  return { team: { name: "", members: "" }, tasks, synced: false };
 }
 
 function loadState() {
@@ -36,6 +36,7 @@ function loadState() {
     return {
       team: Object.assign(base.team, parsed.team || {}),
       tasks: Object.assign(base.tasks, parsed.tasks || {}),
+      synced: typeof parsed.synced === "boolean" ? parsed.synced : false,
     };
   } catch (e) {
     return defaultState();
@@ -225,7 +226,7 @@ function renderDashboard() {
       <div class="overall-label">COMBINED SCORE</div>
       <div class="overall-score">${totalScore} / ${totalMax}</div>
       <div class="overall-label">TOTAL TIME ACROSS COMPLETED STATIONS: ${fmtTime(totalTime) || "00:00"}</div>
-      ${allDone ? `<p style="margin-top:10px;">All three stations complete. Show this screen to a judge, or copy the summary below.</p><textarea class="summary-box" readonly id="fullSummary"></textarea>` : `<p style="margin-top:10px;">Complete all three stations to see your final combined result.</p>`}
+      ${allDone ? `<p style="margin-top:10px;">All three stations complete. Show this screen to a judge, or copy the summary below.</p><div class="sync-status ${state.synced ? "synced" : "unsynced"}">${state.synced ? "Synced to leaderboard" : "Not synced, no connection"}${state.synced ? "" : ' <button class="sync-retry-btn" id="retrySyncBtn">Retry sync</button>'}</div><textarea class="summary-box" readonly id="fullSummary"></textarea>` : `<p style="margin-top:10px;">Complete all three stations to see your final combined result.</p>`}
       <button class="reset-link" id="resetBtn">Reset all progress for this device</button>
     </div>
   `;
@@ -252,6 +253,11 @@ function renderDashboard() {
       render();
     }
   });
+
+  const retrySyncBtn = document.getElementById("retrySyncBtn");
+  if (retrySyncBtn) {
+    retrySyncBtn.addEventListener("click", () => sendResultsToLeaderboard());
+  }
 
   if (allDone) {
     const lines = TASK_ORDER.map((k) => {
@@ -447,6 +453,7 @@ function submitTask(key) {
   stopTimer();
   renderNav();
   renderTask(key);
+  syncResultsIfNeeded();
 }
 
 /* ---------- Timer ---------- */

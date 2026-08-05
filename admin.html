@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cyber Case: Admin</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="brand"><span class="dot">&gt;</span> Cyber Case: Admin</div>
+  </nav>
+
+  <div class="wrap">
+    <section class="view active" id="view-admin">
+      <div class="chip">LIVE LEADERBOARD</div>
+      <h1>Cyber Case: Admin</h1>
+      <div class="subtitle">Read only view for judges</div>
+      <div class="admin-status-row">
+        <span class="admin-updated" id="loggedInAs"></span>
+        <span class="admin-updated" id="lastUpdated"></span>
+      </div>
+      <div id="leaderboardRegion"></div>
+
+      <div class="danger-zone">
+        <div class="danger-zone-title">Danger zone</div>
+        <p class="danger-zone-desc">Permanently deletes every row in the leaderboard sheet. Use this between test runs while preparing for the event, not once real teams have started.</p>
+        <button class="wipe-btn" id="wipeAllBtn">Wipe all leaderboard data</button>
+        <span class="admin-updated" id="wipeStatus"></span>
+      </div>
+    </section>
+  </div>
+
+  <!-- This login check is NOT real security. It is a soft gate to keep
+       casual visitors from opening the leaderboard by accident, nothing
+       more. This is a static site with no server to enforce anything, and
+       the accounts themselves live in plain text in js/admin-config.js for
+       anyone who views source on this page. Do not use this page to show
+       or protect anything sensitive. -->
+  <div class="welcome-modal-backdrop" id="accessModalBackdrop">
+    <div class="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="accessModalTitle">
+      <div class="welcome-modal-header"><span class="chip">ADMIN ACCESS</span></div>
+      <h2 id="accessModalTitle">Judge login</h2>
+      <p>This is a soft gate for casual visitors, not real security. Enter your judge username and password to view the live leaderboard.</p>
+      <input class="team-input modal-input" id="accessUsernameInput" placeholder="Username" style="margin-bottom: 10px;" />
+      <input class="team-input modal-input" id="accessPasswordInput" type="password" placeholder="Password" />
+      <div class="modal-actions">
+        <button class="task-btn modal-start-btn" id="accessStartBtn">Log in</button>
+      </div>
+      <p class="access-error" id="accessError" hidden>Incorrect username or password, try again.</p>
+    </div>
+  </div>
+
+  <footer class="app-footer">Cyber Case: Admin, read only leaderboard for judges</footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin-config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
